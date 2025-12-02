@@ -1,68 +1,113 @@
-# Module 10–12 FastAPI Project  
-Secure Users + Calculation CRUD + CI/CD + Docker Deployment
+Module 13 – FastAPI JWT Authentication + Frontend + CI/CD
 
-This project contains the work for **Module 10, 11, and Module 12** combined into a single evolving FastAPI backend.  
-Each module builds on the previous one, and the final state represents all features completed up to Module 12.
+This project implements a full-stack FastAPI application with JWT authentication, HTML frontend pages, secure password hashing, database integration, and Playwright end-to-end testing.
+GitHub Actions automatically runs all tests, including database integration tests using a PostgreSQL service.
 
----
+🚀 Features
+🔐 Authentication (JWT)
 
-## 🚀 Features Completed
+User Registration
 
-### ✅ Module 10 — Secure User Model
-- SQLAlchemy User model  
-- Pydantic validation  
-- Password hashing & verification  
-- UserCreate and UserRead schemas  
-- GitHub Actions CI for automated tests  
-- Docker image pushed to Docker Hub  
+Login with email & password
 
----
+JWT access token generation
 
-### ✅ Module 11 — Calculation Model
-- SQLAlchemy Calculation model  
-- Pydantic schemas (CalculationCreate, CalculationRead)  
-- Factory pattern for operations (Add, Sub, Mul, Div)  
-- Unit + integration tests  
-- CI/CD tests on GitHub Actions  
+Secure password hashing with Passlib (bcrypt)
 
----
+Token-based protection for backend routes
 
-### ✅ Module 12 — User & Calculation Routes (BREAD)
-- Register user → `POST /users/register`
-- Login user → `POST /users/login`
-- Browse calculations → `GET /calculations`
-- Read calculation → `GET /calculations/{id}`
-- Edit calculation → `PUT/PATCH /calculations/{id}`
-- Add calculation → `POST /calculations`
-- Delete calculation → `DELETE /calculations/{id}`
-- All endpoints validated using Pydantic
-- Full integration testing for CRUD + login
-- CI/CD: Tests run → if successful → Docker image pushed automatically
+🖥️ Frontend Pages
 
----
+/register-page HTML form
 
-## 🧪 Running Tests Locally
+/login-page HTML form
 
-```bash
-pytest -v
+Forms call backend using JS fetch()
 
-All tests should pass before pushing.
+Alerts on success, failure, or invalid inputs
 
-▶️ Running the FastAPI App
+🧮 API Endpoints
+
+Register user
+
+Login user
+
+Protected calculation routes (CRUD)
+
+Input validation using Pydantic schemas
+
+🗄 Database
+
+PostgreSQL (local + GitHub Actions)
+
+SQLAlchemy ORM
+
+Integration tests create tables automatically
+
+🧪 Testing (Unit + Integration + Playwright)
+
+Unit tests for arithmetic
+
+Schema validation tests
+
+Password hashing tests
+
+Database integration tests
+
+Playwright browser E2E tests for:
+
+Register
+
+Login
+
+⚙️ CI/CD (GitHub Actions)
+
+Runs pytest
+
+Launches a PostgreSQL test container
+
+Installs browsers for Playwright
+
+Fails pipeline if any test fails
+
+▶️ Run the App Locally
+
+Install dependencies:
+
+pip install -r requirements.txt
+
+
+Start the backend:
+
 uvicorn app.main:app --reload
 
 
-Open Swagger docs at:
+Open:
 
-http://127.0.0.1:8000/docs
+http://127.0.0.1:8000/register-page
+http://127.0.0.1:8000/login-page
 
-🐳 Docker Hub Image
-
-Your Docker Hub Repository:
-
-https://hub.docker.com/repository/docker/nishitanadimpalli/module10-fastapi-secure-user
+🧪 Run Tests
+pytest -v
 
 
-Pull the image using:
+For Playwright:
 
-docker pull nishitanadimpalli/docker pull nishitanadimpalli/module10-fastapi-secure-user:latest
+playwright install
+
+📁 Project Structure
+app/
+ ├── main.py
+ ├── models.py
+ ├── database.py
+ ├── security.py
+ ├── schemas.py
+ └── routers/
+       ├── auth.py
+       ├── users.py
+       └── calculations.py
+public/
+ ├── register.html
+ └── login.html
+tests/
+.github/workflows/ci.yml
