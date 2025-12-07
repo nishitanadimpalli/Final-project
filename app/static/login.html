@@ -1,21 +1,66 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Login</title>
 </head>
 <body>
+
 <h1>Login</h1>
 
-<form id="loginForm">
-    Email: <input id="email" type="text"><br><br>
-    Password: <input id="password" type="password"><br><br>
+<form id="login-form">
+    <label>Email:</label>
+    <input id="email" type="email" required><br><br>
+
+    <label>Password:</label>
+    <input id="password" type="password" required><br><br>
 
     <button type="submit">Login</button>
 </form>
 
-<p id="message" style="color:red;"></p>
+<p id="status" style="color: red;"></p>
+<script>
+    const API_BASE = "http://127.0.0.1:8000";
 
-<script src="/static/login.js"></script>
+    document.getElementById("login-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+        const res = await fetch(API_BASE + "/auth/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                email: email,
+                password: password
+            }),
+        });
+
+        const statusEl = document.getElementById("status");
+
+        if (!res.ok) {
+            const error = await res.json();
+            statusEl.style.color = "red";
+            statusEl.innerText = "Login failed: " + error.detail;
+            return;
+        }
+
+        const data = await res.json();
+
+        // Save token
+        localStorage.setItem("access_token", data.access_token);
+
+        statusEl.style.color = "green";
+        statusEl.innerText = "Login successful! Redirecting...";
+
+        setTimeout(() => {
+            window.location.href = "/calculations-page";
+        }, 3000);
+    });
+</script>
 
 </body>
 </html>

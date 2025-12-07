@@ -1,24 +1,65 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Register</title>
 </head>
 <body>
 
 <h1>Register</h1>
 
-<form id="registerForm">
-    Email: <input id="email" type="text"><br><br>
-    Username: <input id="username" type="text"><br><br>
-    Password: <input id="password" type="password"><br><br>
-    Confirm Password: <input id="confirm" type="password"><br><br>
+<form id="register-form">
+    <label>Email:</label>
+    <input id="email" type="email" required><br><br>
+
+    <label>Password:</label>
+    <input id="password" type="password" required><br><br>
 
     <button type="submit">Register</button>
 </form>
 
-<p id="message" style="color:red;"></p>
+<p id="status" style="color: red;"></p>
 
-<script src="/static/register.js"></script>
+<script>
+    const API_BASE = "http://127.0.0.1:8000";
+
+    document.getElementById("register-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+        const body = {
+            username: email,
+            email: email,
+            password: password
+        };
+
+        const res = await fetch(API_BASE + "/users/register", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(body),
+        });
+
+        const statusEl = document.getElementById("status");
+
+        if (!res.ok) {
+            const error = await res.json();
+            statusEl.innerText = "Registration failed: " + (error.detail || "Unknown error");
+            return;
+        }
+
+        statusEl.style.color = "green";
+        statusEl.innerText = "Registration successful! Redirecting to login...";
+
+        // Redirect to login page
+        setTimeout(() => {
+            window.location.href = "/login-page";
+        }, 800);
+    });
+</script>
 
 </body>
 </html>

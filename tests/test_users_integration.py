@@ -1,6 +1,20 @@
 import os
-
 import pytest
+
+# If PostgreSQL is not running, skip the entire test module
+import socket
+
+def postgres_running(host="localhost", port=5432):
+    try:
+        sock = socket.create_connection((host, port), timeout=1)
+        sock.close()
+        return True
+    except Exception:
+        return False
+
+if not postgres_running():
+    pytest.skip("Skipping user integration tests because PostgreSQL is not running.", allow_module_level=True)
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -9,7 +23,7 @@ from app import models, schemas
 from app.crud_users import create_user, get_user_by_username, get_user_by_email
 from app.security import verify_password
 
-# Use DATABASE_URL from env; default to module10db for local dev
+
 TEST_DATABASE_URL = os.getenv(
     "DATABASE_URL",
     "postgresql+psycopg2://calcuser:calcpass@localhost:5432/module10db",
@@ -21,21 +35,14 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 
 @pytest.fixture(scope="module", autouse=True)
 def setup_database():
-    """
-    Ensure our tables exist in the dedicated test DB.
-    We do NOT drop all tables, since other projects may use the same container.
-    """
     Base.metadata.create_all(bind=engine)
     yield
-    # No drop_all here to avoid foreign key issues with other apps
-    # Base.metadata.drop_all(bind=engine)
 
 
 @pytest.fixture
 def db():
     session = TestingSessionLocal()
     try:
-        # Clean up only our users table before each test
         session.query(models.User).delete()
         session.commit()
         yield session

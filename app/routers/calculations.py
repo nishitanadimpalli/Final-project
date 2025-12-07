@@ -1,22 +1,25 @@
-# app/routers/calculations.py
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app import models, schemas
 from app.services.calculation_factory import CalculationFactory
+from app.security import get_current_user
 
 router = APIRouter(
     prefix="/calculations",
     tags=["calculations"],
 )
 
-
-# ⭐ 1) CREATE calculation
+# ---------------------------------------------------------
+# ADD (POST)
+# ---------------------------------------------------------
 @router.post("/", response_model=schemas.CalculationRead, status_code=status.HTTP_201_CREATED)
-def create_calculation(calc_in: schemas.CalculationCreate, db: Session = Depends(get_db)):
-    # use factory to get the right operation
+def create_calculation(
+    calc_in: schemas.CalculationCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
     op = CalculationFactory.get_operation(calc_in.type)
 
     try:
@@ -29,6 +32,7 @@ def create_calculation(calc_in: schemas.CalculationCreate, db: Session = Depends
         b=calc_in.b,
         type=calc_in.type,
         result=result,
+        user_id=current_user.id,
     )
     db.add(db_calc)
     db.commit()
@@ -36,32 +40,69 @@ def create_calculation(calc_in: schemas.CalculationCreate, db: Session = Depends
     return db_calc
 
 
-# ⭐ 2) BROWSE all calculations
+# ---------------------------------------------------------
+# BROWSE (GET)
+# ---------------------------------------------------------
 @router.get("/", response_model=list[schemas.CalculationRead])
-def get_calculations(db: Session = Depends(get_db)):
-    return db.query(models.Calculation).all()
+def get_calculations(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    """
+    Return only calculations belonging to logged-in user.
+    """
+    return (
+        db.query(models.Calculation)
+        .filter(models.Calculation.user_id == current_user.id)
+        .all()
+    )
 
 
-# ⭐ 3) READ one calculation (by ID)
+# ---------------------------------------------------------
+# READ ONE (GET /{id})
+# ---------------------------------------------------------
 @router.get("/{calc_id}", response_model=schemas.CalculationRead)
-def get_calculation(calc_id: int, db: Session = Depends(get_db)):
-    calc = db.query(models.Calculation).filter(models.Calculation.id == calc_id).first()
+def get_calculation(
+    calc_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    calc = (
+        db.query(models.Calculation)
+        .filter(
+            models.Calculation.id == calc_id,
+            models.Calculation.user_id == current_user.id,
+        )
+        .first()
+    )
     if not calc:
         raise HTTPException(status_code=404, detail="Calculation not found")
     return calc
 
 
-# ⭐ 4) EDIT calculation (PUT)
-# ⭐ 4) EDIT calculation (PUT)
+# ---------------------------------------------------------
+# EDIT (PUT)
+# ---------------------------------------------------------
 @router.put("/{calc_id}", response_model=schemas.CalculationRead)
-def update_calculation(calc_id: int, update: schemas.CalculationCreate, db: Session = Depends(get_db)):
-
-    calc = db.query(models.Calculation).filter(models.Calculation.id == calc_id).first()
+def update_calculation(
+    calc_id: int,
+    update: schemas.CalculationCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    calc = (
+        db.query(models.Calculation)
+        .filter(
+            models.Calculation.id == calc_id,
+            models.Calculation.user_id == current_user.id,
+        )
+        .first()
+    )
     if not calc:
         raise HTTPException(status_code=404, detail="Calculation not found")
 
-    # use factory + compute(), same as POST
     op = CalculationFactory.get_operation(update.type)
+
     try:
         new_result = op.compute(update.a, update.b)
     except ZeroDivisionError:
@@ -76,15 +117,28 @@ def update_calculation(calc_id: int, update: schemas.CalculationCreate, db: Sess
     db.refresh(calc)
     return calc
 
-# ⭐ 5) DELETE calculation
-@router.delete("/{calc_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_calculation(calc_id: int, db: Session = Depends(get_db)):
 
-    calc = db.query(models.Calculation).filter(models.Calculation.id == calc_id).first()
+# ---------------------------------------------------------
+# DELETE (DELETE /{id})
+# ---------------------------------------------------------
+@router.delete("/{calc_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_calculation(
+    calc_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    calc = (
+        db.query(models.Calculation)
+        .filter(
+            models.Calculation.id == calc_id,
+            models.Calculation.user_id == current_user.id,
+        )
+        .first()
+    )
+
     if not calc:
         raise HTTPException(status_code=404, detail="Calculation not found")
 
     db.delete(calc)
     db.commit()
-
-    return {"message": "Deleted successfully"}
+    return {"message": "Deleted"}

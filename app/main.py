@@ -1,62 +1,59 @@
-# app/main.py
-
 from fastapi import FastAPI
-from pathlib import Path
-from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse
+from pathlib import Path
+from fastapi import Response
 
-from app.database import Base, engine
-from app import models
-from app.routers import users, calculations, auth
-
-
-# -------------------------
-# 🟢 Create Database Tables
-# -------------------------
-Base.metadata.create_all(bind=engine)
+from app.routers import users, auth, calculations
 
 
-# -------------------------
-# 🟢 Initialize App
-# -------------------------
-app = FastAPI(
-    title="FastAPI Secure User + JWT Frontend App",
-    version="1.0.0",
+app = FastAPI()
+
+# -------------------------------------------
+# CORS (allow frontend to call backend)
+# -------------------------------------------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],   # you can restrict later
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
+# -------------------------------------------
+# Routers
+# -------------------------------------------
+app.include_router(users.router)
+app.include_router(auth.router)
+app.include_router(calculations.router)
 
-# -------------------------
-# 🟢 Include Routers
-# -------------------------
-app.include_router(users.router)         # Module 10
-app.include_router(calculations.router)  # Module 12
-app.include_router(auth.router)          # Module 13
-
-
-# -------------------------
-# 🟢 Serve Static Front-End
-# -------------------------
-
-# Folder: app/static/
-static_dir = Path(__file__).parent / "static"
-app.mount("/static", StaticFiles(directory=static_dir), name="static")
+# -------------------------------------------
+# Static Directory Setup
+# -------------------------------------------
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "static"
 
 
-# Serve register page
-@app.get("/register-page", response_class=HTMLResponse)
-def register_page():
-    return FileResponse(static_dir / "register.html")
+# -------------------------------------------
+# Serve Pages
+# -------------------------------------------
+@app.get("/", response_class=HTMLResponse)
+def root():
+    return FileResponse(STATIC_DIR / "login.html")
 
-
-# Serve login page
-@app.get("/login-page", response_class=HTMLResponse)
+@app.get("/login-page")
 def login_page():
-    return FileResponse(static_dir / "login.html")
+    file = (STATIC_DIR / "login.html").read_text()
+    return Response(content=file, media_type="text/html",
+                    headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
+
+@app.get("/register-page")
+def register_page():
+    file = (STATIC_DIR / "register.html").read_text()
+    return Response(content=file, media_type="text/html",
+                    headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
 
 
-# -------------------------
-# 🟢 Root Route
-# -------------------------
-@app.get("/")
-def read_root():
-    return {"message": "FastAPI Secure User App with JWT + Frontend is running"}
+@app.get("/calculations-page", response_class=HTMLResponse)
+def calculations_page():
+    return FileResponse(STATIC_DIR / "calculations.html")

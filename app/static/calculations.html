@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>My Calculations</title>
+</head>
+<body>
+  <h1>Calculations (BREAD)</h1>
+
+  <p id="status"></p>
+
+  <!-- ADD -->
+  <h2>Add Calculation</h2>
+  <form id="add-form">
+    <label>A: <input type="number" step="any" id="add-a" required></label><br>
+    <label>B: <input type="number" step="any" id="add-b" required></label><br>
+    <label>Type:
+      <select id="add-type">
+        <option value="Add">Add</option>
+        <option value="Sub">Sub</option>
+        <option value="Multiply">Multiply</option>
+        <option value="Divide">Divide</option>
+      </select>
+    </label><br>
+    <button type="submit">Create</button>
+  </form>
+
+  <!-- READ ONE -->
+  <h2>Read One Calculation</h2>
+  <form id="read-form">
+    <label>ID: <input type="number" id="read-id" required></label>
+    <button type="submit">Read</button>
+  </form>
+  <pre id="read-one-result"></pre>
+
+  <!-- EDIT -->
+  <h2>Edit Calculation</h2>
+  <form id="edit-form">
+    <label>ID: <input type="number" id="edit-id" required></label><br>
+    <label>A: <input type="number" step="any" id="edit-a" required></label><br>
+    <label>B: <input type="number" step="any" id="edit-b" required></label><br>
+    <label>Type:
+      <select id="edit-type">
+        <option value="Add">Add</option>
+        <option value="Sub">Sub</option>
+        <option value="Multiply">Multiply</option>
+        <option value="Divide">Divide</option>
+      </select>
+    </label><br>
+    <button type="submit">Update</button>
+  </form>
+
+  <!-- DELETE -->
+  <h2>Delete Calculation</h2>
+  <form id="delete-form">
+    <label>ID: <input type="number" id="delete-id" required></label>
+    <button type="submit">Delete</button>
+  </form>
+
+  <!-- BROWSE -->
+  <h2>Browse My Calculations</h2>
+  <button id="refresh-btn">Refresh List</button>
+  <table border="1">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>A</th>
+        <th>B</th>
+        <th>Type</th>
+        <th>Result</th>
+      </tr>
+    </thead>
+    <tbody id="calc-table-body"></tbody>
+  </table>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+
+    function getToken() {
+      return localStorage.getItem("access_token");
+    }
+
+    function authHeaders() {
+      const token = getToken();
+      if (!token) {
+        document.getElementById("status").innerText = "No token. Please login first.";
+      }
+      return {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token,
+      };
+    }
+
+    // BROWSE
+    async function loadCalculations() {
+      const res = await fetch(API_BASE + "/calculations", {
+        method: "GET",
+        headers: authHeaders(),
+      });
+      const tbody = document.getElementById("calc-table-body");
+      tbody.innerHTML = "";
+
+      if (!res.ok) {
+        document.getElementById("status").innerText = "Error loading calculations.";
+        return;
+      }
+
+      const data = await res.json();
+      data.forEach((calc) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${calc.id}</td>
+          <td>${calc.a}</td>
+          <td>${calc.b}</td>
+          <td>${calc.type}</td>
+          <td>${calc.result}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ADD
+    document.getElementById("add-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const body = {
+        a: parseFloat(document.getElementById("add-a").value),
+        b: parseFloat(document.getElementById("add-b").value),
+        type: document.getElementById("add-type").value,
+      };
+
+      const res = await fetch(API_BASE + "/calculations", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        document.getElementById("status").innerText = "Calculation created!";
+        await loadCalculations();
+      } else {
+        const error = await res.json();
+        document.getElementById("status").innerText = "Error: " + (error.detail || "Could not create");
+      }
+    });
+
+    // READ ONE
+    document.getElementById("read-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("read-id").value;
+      const res = await fetch(API_BASE + "/calculations/" + id, {
+        method: "GET",
+        headers: authHeaders(),
+      });
+
+      const pre = document.getElementById("read-one-result");
+      if (res.ok) {
+        const data = await res.json();
+        pre.textContent = JSON.stringify(data, null, 2);
+      } else {
+        const error = await res.json();
+        pre.textContent = "Error: " + (error.detail || "Not found");
+      }
+    });
+
+    // EDIT
+    document.getElementById("edit-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("edit-id").value;
+      const body = {
+        a: parseFloat(document.getElementById("edit-a").value),
+        b: parseFloat(document.getElementById("edit-b").value),
+        type: document.getElementById("edit-type").value,
+      };
+
+      const res = await fetch(API_BASE + "/calculations/" + id, {
+        method: "PUT",
+        headers: authHeaders(),
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        document.getElementById("status").innerText = "Calculation updated!";
+        await loadCalculations();
+      } else {
+        const error = await res.json();
+        document.getElementById("status").innerText = "Error: " + (error.detail || "Could not update");
+      }
+    });
+
+    // DELETE
+    document.getElementById("delete-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("delete-id").value;
+
+      const res = await fetch(API_BASE + "/calculations/" + id, {
+        method: "DELETE",
+        headers: authHeaders(),
+      });
+
+      if (res.ok || res.status === 204) {
+        document.getElementById("status").innerText = "Deleted!";
+        await loadCalculations();
+      } else {
+        const error = await res.json();
+        document.getElementById("status").innerText = "Error: " + (error.detail || "Could not delete");
+      }
+    });
+
+    document.getElementById("refresh-btn").addEventListener("click", loadCalculations);
+
+    // Auto-load on page open
+    loadCalculations();
+  </script>
+</body>
+</html>

@@ -52,3 +52,5 @@ class CalculationRead(CalculationBase):
 
     # Pydantic v2 config: read from SQLAlchemy models
     model_config = ConfigDict(from_attributes=True)
+
+
