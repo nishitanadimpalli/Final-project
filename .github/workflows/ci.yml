@@ -21,7 +21,7 @@ jobs:
           --health-cmd "pg_isready -U calcuser"
           --health-interval 10s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
 
     env:
       DATABASE_URL: postgresql://calcuser:calcpass@localhost:5432/module10db
@@ -48,7 +48,7 @@ jobs:
           DATABASE_URL: postgresql://calcuser:calcpass@localhost:5432/module10db
 
       - name: Wait for server
-        run: sleep 5
+        run: sleep 7
 
       - name: Run Tests
         run: pytest -v

@@ -1,113 +1,143 @@
-Module 13 – FastAPI JWT Authentication + Frontend + CI/CD
+Module 14 – Secure FastAPI Application with User Auth, CRUD, CI/CD & Docker Deployment
 
-This project implements a full-stack FastAPI application with JWT authentication, HTML frontend pages, secure password hashing, database integration, and Playwright end-to-end testing.
-GitHub Actions automatically runs all tests, including database integration tests using a PostgreSQL service.
+This project implements a secure FastAPI web application with the following features:
 
-🚀 Features
-🔐 Authentication (JWT)
+🔐 User Registration & Login (JWT-authentication)
 
-User Registration
+➕ Calculator Operations (Add/Sub/Mul/Div)
 
-Login with email & password
+🔄 Full BREAD CRUD Operations tied to each authenticated user
 
-JWT access token generation
+🧪 Automated Unit, Integration, and Playwright E2E Tests
 
-Secure password hashing with Passlib (bcrypt)
+🐳 Dockerized Application with CI/CD
 
-Token-based protection for backend routes
+🚀 GitHub Actions for Testing + Docker Hub Deployment
 
-🖥️ Frontend Pages
+🗄️ PostgreSQL Database Integration
 
-/register-page HTML form
+This repository is the final submission for Module 14, showcasing a complete secure production-ready backend project.
 
-/login-page HTML form
+🏗️ Project Structure
+app/
+│── main.py
+│── models.py
+│── schemas.py
+│── security.py
+│── database.py
+│── crud_calculations.py
+│── crud_users.py
+│── routers/
+│     ├── auth.py
+│     ├── calculations.py
+│
+templates/
+│── login.html
+│── register.html
+│── calculations.html
+│
+tests/
+│── test_calculation_unit.py
+│── test_calculation_integration.py
+│── test_users_integration.py
+│── test_schemas.py
+│── test_security.py
+│── test_e2e.py
+│
+Dockerfile
+requirements.txt
 
-Forms call backend using JS fetch()
+🔐 Features Overview
+✔ 1. User Authentication
 
-Alerts on success, failure, or invalid inputs
+Register with unique username + email
 
-🧮 API Endpoints
+Passwords are hashed using Passlib (bcrypt)
 
-Register user
+Log in to receive a JWT access token
 
-Login user
+All authenticated routes require valid JWT
 
-Protected calculation routes (CRUD)
+✔ 2. Calculations (CRUD/BREAD)
 
-Input validation using Pydantic schemas
+Each user can:
 
-🗄 Database
+Create a calculation
 
-PostgreSQL (local + GitHub Actions)
+Read a single calculation
 
-SQLAlchemy ORM
+Edit their own calculation
 
-Integration tests create tables automatically
+Delete their calculation
 
-🧪 Testing (Unit + Integration + Playwright)
+Browse all calculations belonging to them
 
-Unit tests for arithmetic
+Supported operations:
 
-Schema validation tests
+Add, Subtract, Multiply, Divide
 
-Password hashing tests
+✔ 3. Database
 
-Database integration tests
+Uses PostgreSQL with SQLAlchemy ORM.
 
-Playwright browser E2E tests for:
+Environment variable:
 
-Register
+DATABASE_URL=postgresql://calcuser:calcpass@localhost:5432/module10db
 
-Login
+Run all tests:
+pytest -vv
 
-⚙️ CI/CD (GitHub Actions)
+🐳 Docker Support
 
-Runs pytest
+The project ships with a production-ready Dockerfile.
 
-Launches a PostgreSQL test container
+Build manually:
+docker build -t yourname/module14 .
 
-Installs browsers for Playwright
+Run:
+docker run -p 8000:8000 yourname/module14
 
-Fails pipeline if any test fails
+🚀 CI/CD Using GitHub Actions
 
-▶️ Run the App Locally
+Two workflows automate this project:
 
-Install dependencies:
+1️⃣ ci.yml — Test Pipeline
 
+Runs on every commit:
+
+Sets up PostgreSQL service
+
+Installs dependencies
+
+Runs FastAPI server
+
+Executes all tests
+
+2️⃣ docker-publish.yml — Deployment Pipeline
+
+On every push to main, this workflow:
+
+Builds Docker image
+
+Logs in to Docker Hub
+
+Pushes:
+
+yourname/module14:latest
+
+yourname/module14:<commit-sha>
+
+Secrets required:
+
+DOCKER_USERNAME
+DOCKER_TOKEN
+
+▶️ Running the App Locally
+1. Install dependencies
 pip install -r requirements.txt
 
-
-Start the backend:
-
+2. Start server
 uvicorn app.main:app --reload
 
-
-Open:
-
+3. Open in browser:
 http://127.0.0.1:8000/register-page
-http://127.0.0.1:8000/login-page
-
-🧪 Run Tests
-pytest -v
-
-
-For Playwright:
-
-playwright install
-
-📁 Project Structure
-app/
- ├── main.py
- ├── models.py
- ├── database.py
- ├── security.py
- ├── schemas.py
- └── routers/
-       ├── auth.py
-       ├── users.py
-       └── calculations.py
-public/
- ├── register.html
- └── login.html
-tests/
-.github/workflows/ci.yml
