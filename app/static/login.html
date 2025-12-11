@@ -1,76 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <title>Login</title>
 </head>
 <body>
-
 <h1>Login</h1>
 
-<p id="msg" style="color: red;"></p>
-
 <form id="loginForm">
-    <label for="email">Email:</label>
-    <input type="email" id="email" required><br><br>
+    <label>Email:</label>
+    <input id="email" type="email" required><br><br>
 
-    <label for="password">Password:</label>
-    <input type="password" id="password" required><br><br>
+    <label>Password:</label>
+    <input id="password" type="password" required><br><br>
 
     <button type="submit">Login</button>
 </form>
 
-<p>
-    <a href="/register-page">Go to Register</a>
-</p>
+<p id="msg"></p>
 
 <script>
-document.getElementById("loginForm").addEventListener("submit", async function (event) {
-    event.preventDefault();
+document.getElementById("loginForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
 
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
-    const msg = document.getElementById("msg");
 
-    try {
-        const response = await fetch("/auth/login", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                email: email,        // must match backend schema
-                password: password   // must match backend schema
-            })
-        });
+    const res = await fetch("/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+    });
 
-        if (!response.ok) {
-            msg.style.color = "red";
-            msg.textContent = "Invalid email or password.";
-            return;
-        }
+    const data = await res.json();
 
-        const data = await response.json();
+    if (res.ok && data.access_token) {
+        console.log("Token received:", data.access_token);
 
-        // ⭐ VERY IMPORTANT:
-        // Save token under key "access_token"
-        // because:
-        //  - stats.html does localStorage.getItem("access_token")
-        //  - Playwright test does localStorage.getItem("access_token")
+        // ⭐⭐⭐ IMPORTANT — this is what Playwright checks ⭐⭐⭐
         localStorage.setItem("access_token", data.access_token);
 
-        msg.style.color = "green";
-        msg.textContent = "Login successful! Redirecting...";
-
-        // Optional small delay, then go to calculations page
-        setTimeout(() => {
-            window.location.href = "/calculations-page";
-        }, 300);
-
-    } catch (err) {
-        console.error(err);
-        msg.style.color = "red";
-        msg.textContent = "Error talking to server. Please try again.";
+        document.getElementById("msg").innerText = "Login successful!";
+        window.location.href = "/calculations-page";
+    } else {
+        console.error("Login failed:", data);
+        document.getElementById("msg").innerText = "Login failed!";
     }
 });
 </script>
