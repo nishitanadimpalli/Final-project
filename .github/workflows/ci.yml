@@ -60,5 +60,23 @@ jobs:
             sleep 1
           done
 
+      - name: Show server log tail
+        run: |
+          echo "---- server.log (first 200 lines) ----"
+          sed -n '1,200p' server.log || true
+
+      - name: Verify pages and seed test user
+        run: |
+          echo "Checking /register-page status:"
+          curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8000/register-page || true
+
+          echo "Checking /auth/login availability (HEAD):"
+          curl -s -I http://127.0.0.1:8000/auth/login || true
+
+          echo "Creating test user (may fail if already exists):"
+          curl -s -X POST http://127.0.0.1:8000/users/register \
+            -H "Content-Type: application/json" \
+            -d '{"email":"test@example.com","username":"testuser","password":"pass123"}' || true
+
       - name: Run tests
         run: pytest -q
