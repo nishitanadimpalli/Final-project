@@ -1,4 +1,4 @@
-name: CI - Run Tests
+name: Final Project CI/CD
 
 on:
   push:
@@ -21,14 +21,14 @@ jobs:
           --health-cmd "pg_isready -U calcuser"
           --health-interval 10s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
 
     env:
       DATABASE_URL: postgresql://calcuser:calcpass@localhost:5432/module10db
-      PYTHONPATH: "${{ github.workspace }}"
+      PYTHONPATH: ${{ github.workspace }}
 
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v3
 
       - name: Set up Python
@@ -42,14 +42,10 @@ jobs:
           pip install -r requirements.txt
           playwright install --with-deps
 
-      - name: Initialize Database (Create Tables)
-        run: |
-          python app/ci_init_db.py
+      - name: Initialize CI database (create tables)
+        run: python app/ci_init_db.py
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
 
-      - name: Start FastAPI Server
-        run: |
-          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
-          sleep 4
-
-      - name: Run Tests (pytest + Playwright)
+      - name: Run tests
         run: pytest -q
