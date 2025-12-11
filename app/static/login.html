@@ -5,67 +5,75 @@
     <title>Login</title>
 </head>
 <body>
-    <h1>Login</h1>
 
-    <label>
-        Email:
-        <input type="email" id="email">
-    </label>
-    <br>
+<h1>Login</h1>
 
-    <label>
-        Password:
-        <input type="password" id="password">
-    </label>
-    <br>
+<p id="msg" style="color: red;"></p>
 
-    <button onclick="doLogin()">Login</button>
+<form id="loginForm">
+    <label for="email">Email:</label>
+    <input type="email" id="email" required><br><br>
 
-    <p id="message"></p>
+    <label for="password">Password:</label>
+    <input type="password" id="password" required><br><br>
 
-    <p>
-        Don’t have an account?
-        <a href="/register-page">Go to Register</a>
-    </p>
+    <button type="submit">Login</button>
+</form>
 
-    <script>
-        async function doLogin() {
-            const email = document.getElementById("email").value.trim();
-            const password = document.getElementById("password").value.trim();
-            const messageEl = document.getElementById("message");
+<p>
+    <a href="/register-page">Go to Register</a>
+</p>
 
-            if (!email || !password) {
-                messageEl.textContent = "Please fill email and password.";
-                return;
-            }
+<script>
+document.getElementById("loginForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
 
-            try {
-                const response = await fetch("/auth/login", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email, password })
-                });
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const msg = document.getElementById("msg");
 
-                const data = await response.json().catch(() => ({}));
+    try {
+        const response = await fetch("/auth/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                email: email,        // must match backend schema
+                password: password   // must match backend schema
+            })
+        });
 
-                if (!response.ok) {
-                    messageEl.textContent = data.detail || "Login failed.";
-                    return;
-                }
-
-                // Save token for later (stats, calculations, etc.)
-                if (data.access_token) {
-                    localStorage.setItem("access_token", data.access_token);
-                }
-
-                messageEl.textContent = "Login successful!";
-                // Optionally navigate after a short delay:
-                // setTimeout(() => { window.location.href = "/calculations-page"; }, 1000);
-            } catch (err) {
-                console.error(err);
-                messageEl.textContent = "Network error.";
-            }
+        if (!response.ok) {
+            msg.style.color = "red";
+            msg.textContent = "Invalid email or password.";
+            return;
         }
-    </script>
+
+        const data = await response.json();
+
+        // ⭐ VERY IMPORTANT:
+        // Save token under key "access_token"
+        // because:
+        //  - stats.html does localStorage.getItem("access_token")
+        //  - Playwright test does localStorage.getItem("access_token")
+        localStorage.setItem("access_token", data.access_token);
+
+        msg.style.color = "green";
+        msg.textContent = "Login successful! Redirecting...";
+
+        // Optional small delay, then go to calculations page
+        setTimeout(() => {
+            window.location.href = "/calculations-page";
+        }, 300);
+
+    } catch (err) {
+        console.error(err);
+        msg.style.color = "red";
+        msg.textContent = "Error talking to server. Please try again.";
+    }
+});
+</script>
+
 </body>
 </html>
