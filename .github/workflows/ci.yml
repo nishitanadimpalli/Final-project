@@ -1,4 +1,4 @@
-name: Final Project CI
+name: Final Project CI/CD
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
           - 5432:5432
         options: >-
           --health-cmd "pg_isready -U calcuser"
-          --health-interval 5s
+          --health-interval 10s
           --health-timeout 5s
           --health-retries 10
 
@@ -28,7 +28,7 @@ jobs:
       PYTHONPATH: ${{ github.workspace }}
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v3
 
       - name: Set up Python
@@ -42,7 +42,7 @@ jobs:
           pip install -r requirements.txt
           playwright install --with-deps
 
-      - name: Initialize database tables
+      - name: Wait for DB + Create Tables
         run: python app/ci_init_db.py
 
       - name: Run tests
