@@ -1,4 +1,4 @@
-name: Final Project CI
+name: CI - Run Tests
 
 on:
   push:
@@ -21,13 +21,14 @@ jobs:
           --health-cmd "pg_isready -U calcuser"
           --health-interval 10s
           --health-timeout 5s
-          --health-retries 10
+          --health-retries 5
 
     env:
       DATABASE_URL: postgresql://calcuser:calcpass@localhost:5432/module10db
+      PYTHONPATH: "${{ github.workspace }}"
 
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Set up Python
@@ -41,42 +42,14 @@ jobs:
           pip install -r requirements.txt
           playwright install --with-deps
 
-      - name: Fix PYTHONPATH
-        run: echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
-
-      - name: Init DB tables
-        run: python app/ci_init_db.py
+      - name: Initialize Database (Create Tables)
+        run: |
+          python app/ci_init_db.py
 
       - name: Start FastAPI Server
         run: |
-          uvicorn app.main:app --host 0.0.0.0 --port 8000 > server.log 2>&1 &
-          # Wait for the server to respond before running tests (max 30s)
-          for i in $(seq 1 30); do
-            if curl -sSf http://127.0.0.1:8000/ > /dev/null; then
-              echo "Server is up"
-              break
-            fi
-            echo "Waiting for server... ($i)"
-            sleep 1
-          done
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          sleep 4
 
-      - name: Show server log tail
-        run: |
-          echo "---- server.log (first 200 lines) ----"
-          sed -n '1,200p' server.log || true
-
-      - name: Verify pages and seed test user
-        run: |
-          echo "Checking /register-page status:"
-          curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8000/register-page || true
-
-          echo "Checking /auth/login availability (HEAD):"
-          curl -s -I http://127.0.0.1:8000/auth/login || true
-
-          echo "Creating test user (may fail if already exists):"
-          curl -s -X POST http://127.0.0.1:8000/users/register \
-            -H "Content-Type: application/json" \
-            -d '{"email":"test@example.com","username":"testuser","password":"pass123"}' || true
-
-      - name: Run tests
+      - name: Run Tests (pytest + Playwright)
         run: pytest -q
