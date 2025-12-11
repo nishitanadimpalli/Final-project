@@ -1,7 +1,10 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, EmailStr, ConfigDict, model_validator
-from .models import CalculationType
+
+# ------------------
+# USER SCHEMAS
+# ------------------
 
 class UserBase(BaseModel):
     username: str
@@ -18,29 +21,34 @@ class UserRead(UserBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
 
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
 
+
+# ------------------
+# CALCULATION SCHEMAS
+# ------------------
+
 class CalculationBase(BaseModel):
     a: float
     b: float
-    type: CalculationType
+    type: str   # FIXED — allows "Add", "Sub", "Multiply", "Divide"
 
     @model_validator(mode="after")
     def check_divide_by_zero(self):
-        # This runs AFTER a, b, and type are all set
-        if self.type == CalculationType.DIVIDE and self.b == 0:
+        if self.type == "Divide" and self.b == 0:
             raise ValueError("b (divisor) cannot be zero for Divide type.")
         return self
 
 
 class CalculationCreate(CalculationBase):
-    """Input schema for creating a calculation."""
     pass
 
 
@@ -50,7 +58,18 @@ class CalculationRead(CalculationBase):
     user_id: Optional[int] = None
     created_at: datetime
 
-    # Pydantic v2 config: read from SQLAlchemy models
     model_config = ConfigDict(from_attributes=True)
 
 
+# ------------------
+# STATS SCHEMA
+# ------------------
+
+class CalculationStats(BaseModel):
+    total_calculations: int
+    add_count: int
+    sub_count: int
+    multiply_count: int
+    divide_count: int
+    avg_a: Optional[float] = None
+    avg_b: Optional[float] = None

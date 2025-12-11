@@ -1,65 +1,88 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Register</title>
 </head>
 <body>
+    <h1>Register</h1>
 
-<h1>Register</h1>
+    <label>
+        Email:
+        <input type="email" id="email">
+    </label>
+    <br>
 
-<form id="register-form">
-    <label>Email:</label>
-    <input id="email" type="email" required><br><br>
+    <label>
+        Username:
+        <input type="text" id="username">
+    </label>
+    <br>
 
-    <label>Password:</label>
-    <input id="password" type="password" required><br><br>
+    <label>
+        Password:
+        <input type="password" id="password">
+    </label>
+    <br>
 
-    <button type="submit">Register</button>
-</form>
+    <label>
+        Confirm Password:
+        <input type="password" id="confirm">
+    </label>
+    <br>
 
-<p id="status" style="color: red;"></p>
+    <button onclick="doRegister()">Register</button>
 
-<script>
-    const API_BASE = "http://127.0.0.1:8000";
+    <p id="message"></p>
 
-    document.getElementById("register-form").addEventListener("submit", async (e) => {
-        e.preventDefault();
+    <p>
+        Already have an account?
+        <a href="/login-page">Go to Login</a>
+    </p>
 
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
+    <script>
+        async function doRegister() {
+            const email = document.getElementById("email").value.trim();
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value.trim();
+            const confirm = document.getElementById("confirm").value.trim();
+            const messageEl = document.getElementById("message");
 
-        const body = {
-            username: email,
-            email: email,
-            password: password
-        };
+            if (!email || !username || !password || !confirm) {
+                messageEl.textContent = "Please fill all fields.";
+                return;
+            }
 
-        const res = await fetch(API_BASE + "/users/register", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(body),
-        });
+            if (password !== confirm) {
+                messageEl.textContent = "Passwords do not match.";
+                return;
+            }
 
-        const statusEl = document.getElementById("status");
+            try {
+                const response = await fetch("/users/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, username, password })
+                });
 
-        if (!res.ok) {
-            const error = await res.json();
-            statusEl.innerText = "Registration failed: " + (error.detail || "Unknown error");
-            return;
+                const data = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    // API returns {"detail": "..."} for errors
+                    if (data.detail) {
+                        messageEl.textContent = data.detail;
+                    } else {
+                        messageEl.textContent = "Registration failed.";
+                    }
+                    return;
+                }
+
+                messageEl.textContent = "Registration successful!";
+            } catch (err) {
+                console.error(err);
+                messageEl.textContent = "Network error.";
+            }
         }
-
-        statusEl.style.color = "green";
-        statusEl.innerText = "Registration successful! Redirecting to login...";
-
-        // Redirect to login page
-        setTimeout(() => {
-            window.location.href = "/login-page";
-        }, 800);
-    });
-</script>
-
+    </script>
 </body>
 </html>

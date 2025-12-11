@@ -1,143 +1,127 @@
-Module 14 – Secure FastAPI Application with User Auth, CRUD, CI/CD & Docker Deployment
+FastAPI Secure Calculator – Final Project
 
-This project implements a secure FastAPI web application with the following features:
+This project is a full-stack FastAPI web application implementing:
 
-🔐 User Registration & Login (JWT-authentication)
+Secure user authentication (JWT)
 
-➕ Calculator Operations (Add/Sub/Mul/Div)
+BREAD operations for calculations
 
-🔄 Full BREAD CRUD Operations tied to each authenticated user
+A new feature: User Calculation Statistics
 
-🧪 Automated Unit, Integration, and Playwright E2E Tests
+SQLite for local testing + PostgreSQL for production
 
-🐳 Dockerized Application with CI/CD
+Full test suite:
+✔ Unit Tests
+✔ Integration Tests
+✔ End-to-End Tests (Playwright)
 
-🚀 GitHub Actions for Testing + Docker Hub Deployment
+Dockerized application
 
-🗄️ PostgreSQL Database Integration
+Automated CI/CD pipeline with GitHub Actions pushing to Docker Hub
 
-This repository is the final submission for Module 14, showcasing a complete secure production-ready backend project.
+🚀 New Feature: Calculation Statistics
 
-🏗️ Project Structure
+The new feature adds a /calculations/stats backend route and a new stats-page front-end page where the user can:
+
+View total calculations performed
+
+See counts of Add, Sub, Multiply, Divide
+
+View average values of operands A and B
+
+View the results in real time with a “Load My Stats” button
+
+This required:
+
+New backend logic in services/stats.py
+
+New route in routes/calculations.py
+
+New front-end page (stats.html)
+
+New E2E Playwright test validating full workflow
+
+📁 Project Structure
 app/
-│── main.py
-│── models.py
-│── schemas.py
-│── security.py
-│── database.py
-│── crud_calculations.py
-│── crud_users.py
-│── routers/
-│     ├── auth.py
-│     ├── calculations.py
-│
-templates/
-│── login.html
-│── register.html
-│── calculations.html
-│
+ ├── main.py
+ ├── models.py
+ ├── database.py
+ ├── security.py
+ ├── schemas.py
+ ├── services/
+ │     ├── calculation_factory.py
+ │     ├── stats.py
+ ├── routes/
+ │     ├── users.py
+ │     ├── auth.py
+ │     ├── calculations.py
+ ├── templates/
+ │     ├── register.html
+ │     ├── login.html
+ │     ├── calculations.html
+ │     ├── stats.html
 tests/
-│── test_calculation_unit.py
-│── test_calculation_integration.py
-│── test_users_integration.py
-│── test_schemas.py
-│── test_security.py
-│── test_e2e.py
-│
-Dockerfile
+ ├── test_calculation_unit.py
+ ├── test_stats_unit.py
+ ├── test_calculation_integration.py
+ ├── test_e2e.py
 requirements.txt
+Dockerfile
+.github/workflows/ci.yml
+README.md
 
-🔐 Features Overview
-✔ 1. User Authentication
+⚙️ How to Run the Application Locally
+1️⃣ Create Virtual Environment
+python3 -m venv venv
+source venv/bin/activate      # Mac/Linux
+venv\Scripts\activate         # Windows
 
-Register with unique username + email
-
-Passwords are hashed using Passlib (bcrypt)
-
-Log in to receive a JWT access token
-
-All authenticated routes require valid JWT
-
-✔ 2. Calculations (CRUD/BREAD)
-
-Each user can:
-
-Create a calculation
-
-Read a single calculation
-
-Edit their own calculation
-
-Delete their calculation
-
-Browse all calculations belonging to them
-
-Supported operations:
-
-Add, Subtract, Multiply, Divide
-
-✔ 3. Database
-
-Uses PostgreSQL with SQLAlchemy ORM.
-
-Environment variable:
-
-DATABASE_URL=postgresql://calcuser:calcpass@localhost:5432/module10db
-
-Run all tests:
-pytest -vv
-
-🐳 Docker Support
-
-The project ships with a production-ready Dockerfile.
-
-Build manually:
-docker build -t yourname/module14 .
-
-Run:
-docker run -p 8000:8000 yourname/module14
-
-🚀 CI/CD Using GitHub Actions
-
-Two workflows automate this project:
-
-1️⃣ ci.yml — Test Pipeline
-
-Runs on every commit:
-
-Sets up PostgreSQL service
-
-Installs dependencies
-
-Runs FastAPI server
-
-Executes all tests
-
-2️⃣ docker-publish.yml — Deployment Pipeline
-
-On every push to main, this workflow:
-
-Builds Docker image
-
-Logs in to Docker Hub
-
-Pushes:
-
-yourname/module14:latest
-
-yourname/module14:<commit-sha>
-
-Secrets required:
-
-DOCKER_USERNAME
-DOCKER_TOKEN
-
-▶️ Running the App Locally
-1. Install dependencies
+2️⃣ Install Requirements
 pip install -r requirements.txt
+playwright install
 
-2. Start server
+3️⃣ Run the FastAPI Server
 uvicorn app.main:app --reload
 
-3. Open in browser:
-http://127.0.0.1:8000/register-page
+
+Visit:
+
+Register: http://127.0.0.1:8000/register-page
+
+Login: http://127.0.0.1:8000/login-page
+
+Calculations: http://127.0.0.1:8000/calculations-page
+
+Stats Page: http://127.0.0.1:8000/stats-page
+
+🧪 Running Tests
+Run All Tests
+pytest -q
+
+Run Only E2E Tests
+pytest tests/test_e2e.py -q
+
+🐳 Running with Docker
+Build Image
+docker build -t yourusername/final-project-app .
+
+Run Container
+docker run -p 8000:8000 yourusername/final-project-app
+
+🔄 CI/CD Pipeline
+
+This project includes GitHub Actions that automatically:
+
+Install dependencies
+
+Spin up PostgreSQL service
+
+Run all tests (unit + integration + playwright E2E)
+
+Build Docker image
+
+Push image to Docker Hub
+
+The workflow file is located at:
+
+.github/workflows/ci.yml

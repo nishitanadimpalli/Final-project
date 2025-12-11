@@ -57,3 +57,7 @@ def register_page():
 @app.get("/calculations-page", response_class=HTMLResponse)
 def calculations_page():
     return FileResponse(STATIC_DIR / "calculations.html")
+
+@app.get("/stats-page", response_class=HTMLResponse)
+def stats_page():
+    return FileResponse(STATIC_DIR / "stats.html")

@@ -1,66 +1,71 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Login</title>
 </head>
 <body>
+    <h1>Login</h1>
 
-<h1>Login</h1>
+    <label>
+        Email:
+        <input type="email" id="email">
+    </label>
+    <br>
 
-<form id="login-form">
-    <label>Email:</label>
-    <input id="email" type="email" required><br><br>
+    <label>
+        Password:
+        <input type="password" id="password">
+    </label>
+    <br>
 
-    <label>Password:</label>
-    <input id="password" type="password" required><br><br>
+    <button onclick="doLogin()">Login</button>
 
-    <button type="submit">Login</button>
-</form>
+    <p id="message"></p>
 
-<p id="status" style="color: red;"></p>
-<script>
-    const API_BASE = "http://127.0.0.1:8000";
+    <p>
+        Don’t have an account?
+        <a href="/register-page">Go to Register</a>
+    </p>
 
-    document.getElementById("login-form").addEventListener("submit", async (e) => {
-        e.preventDefault();
+    <script>
+        async function doLogin() {
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value.trim();
+            const messageEl = document.getElementById("message");
 
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
+            if (!email || !password) {
+                messageEl.textContent = "Please fill email and password.";
+                return;
+            }
 
-        const res = await fetch(API_BASE + "/auth/login", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                email: email,
-                password: password
-            }),
-        });
+            try {
+                const response = await fetch("/auth/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password })
+                });
 
-        const statusEl = document.getElementById("status");
+                const data = await response.json().catch(() => ({}));
 
-        if (!res.ok) {
-            const error = await res.json();
-            statusEl.style.color = "red";
-            statusEl.innerText = "Login failed: " + error.detail;
-            return;
+                if (!response.ok) {
+                    messageEl.textContent = data.detail || "Login failed.";
+                    return;
+                }
+
+                // Save token for later (stats, calculations, etc.)
+                if (data.access_token) {
+                    localStorage.setItem("access_token", data.access_token);
+                }
+
+                messageEl.textContent = "Login successful!";
+                // Optionally navigate after a short delay:
+                // setTimeout(() => { window.location.href = "/calculations-page"; }, 1000);
+            } catch (err) {
+                console.error(err);
+                messageEl.textContent = "Network error.";
+            }
         }
-
-        const data = await res.json();
-
-        // Save token
-        localStorage.setItem("access_token", data.access_token);
-
-        statusEl.style.color = "green";
-        statusEl.innerText = "Login successful! Redirecting...";
-
-        setTimeout(() => {
-            window.location.href = "/calculations-page";
-        }, 3000);
-    });
-</script>
-
+    </script>
 </body>
 </html>

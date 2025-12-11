@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Calculation Stats</title>
+    <style>
+        #message {
+            margin-top: 10px;
+            font-weight: bold;
+            color: green; /* ensures visibility for Playwright */
+        }
+    </style>
+</head>
+<body>
+    <h1>My Calculation Stats</h1>
+
+    <p>
+        <a href="/calculations-page">⬅ Back to Calculations</a>
+    </p>
+
+    <!-- ⭐ MUST EXIST FOR PLAYWRIGHT -->
+    <p id="message"></p>
+
+    <button id="loadBtn">Load My Stats</button>
+
+    <h2>Summary</h2>
+    <ul>
+        <li>Total calculations: <span id="total_calculations"></span></li>
+        <li>Add count: <span id="add_count"></span></li>
+        <li>Sub count: <span id="sub_count"></span></li>
+        <li>Multiply count: <span id="multiply_count"></span></li>
+        <li>Divide count: <span id="divide_count"></span></li>
+        <li>Average A: <span id="avg_a"></span></li>
+        <li>Average B: <span id="avg_b"></span></li>
+    </ul>
+
+    <script>
+        async function loadStats() {
+            const messageEl = document.getElementById("message");
+
+            const token = localStorage.getItem("access_token");
+            if (!token) {
+                messageEl.textContent = "Please log in first, then return to this page.";
+                return;
+            }
+
+            try {
+                const response = await fetch("/calculations/stats", {
+                    method: "GET",
+                    headers: {
+                        "Authorization": "Bearer " + token
+                    }
+                });
+
+                if (!response.ok) {
+                    const data = await response.json().catch(() => ({}));
+                    messageEl.textContent = data.detail
+                        ? JSON.stringify(data.detail)
+                        : "Failed to load stats.";
+                    messageEl.style.color = "red";
+                    return;
+                }
+
+                const data = await response.json();
+
+                // update the UI
+                document.getElementById("total_calculations").textContent = data.total_calculations;
+                document.getElementById("add_count").textContent = data.add_count;
+                document.getElementById("sub_count").textContent = data.sub_count;
+                document.getElementById("multiply_count").textContent = data.multiply_count;
+                document.getElementById("divide_count").textContent = data.divide_count;
+                document.getElementById("avg_a").textContent = data.avg_a ?? "N/A";
+                document.getElementById("avg_b").textContent = data.avg_b ?? "N/A";
+
+                // ⭐ THIS is what Playwright waits for!
+                messageEl.textContent = "Stats loaded successfully!";
+                messageEl.style.color = "green";
+
+            } catch (err) {
+                console.error(err);
+                messageEl.textContent = "Error talking to the server.";
+                messageEl.style.color = "red";
+            }
+        }
+
+        document.getElementById("loadBtn").addEventListener("click", loadStats);
+
+        // Load immediately on page open
+        window.addEventListener("DOMContentLoaded", loadStats);
+    </script>
+</body>
+</html>

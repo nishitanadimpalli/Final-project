@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-
 from app.database import get_db
 from app import models, schemas
 from app.services.calculation_factory import CalculationFactory
+from app.services.stats import summarize_calculations
 from app.security import get_current_user
 
 router = APIRouter(
@@ -11,9 +11,30 @@ router = APIRouter(
     tags=["calculations"],
 )
 
-# ---------------------------------------------------------
-# ADD (POST)
-# ---------------------------------------------------------
+# =========================================================
+# 1. STATS ROUTE  (MUST COME BEFORE /{calc_id})
+# =========================================================
+@router.get("/stats")
+def get_calculation_stats(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    """
+    Returns summary statistics for this user's calculations.
+    """
+    calcs = (
+        db.query(models.Calculation)
+        .filter(models.Calculation.user_id == current_user.id)
+        .all()
+    )
+
+    # Return plain dictionary (no response_model → no validation issues)
+    return summarize_calculations(calcs)
+
+
+# =========================================================
+# 2. CREATE (POST /calculations)
+# =========================================================
 @router.post("/", response_model=schemas.CalculationRead, status_code=status.HTTP_201_CREATED)
 def create_calculation(
     calc_in: schemas.CalculationCreate,
@@ -40,16 +61,16 @@ def create_calculation(
     return db_calc
 
 
-# ---------------------------------------------------------
-# BROWSE (GET)
-# ---------------------------------------------------------
+# =========================================================
+# 3. BROWSE (GET /calculations)
+# =========================================================
 @router.get("/", response_model=list[schemas.CalculationRead])
 def get_calculations(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
     """
-    Return only calculations belonging to logged-in user.
+    Return only this user's calculations.
     """
     return (
         db.query(models.Calculation)
@@ -58,9 +79,10 @@ def get_calculations(
     )
 
 
-# ---------------------------------------------------------
-# READ ONE (GET /{id})
-# ---------------------------------------------------------
+# =========================================================
+# 4. READ ONE (GET /calculations/{calc_id})
+# MUST COME AFTER /stats
+# =========================================================
 @router.get("/{calc_id}", response_model=schemas.CalculationRead)
 def get_calculation(
     calc_id: int,
@@ -80,9 +102,9 @@ def get_calculation(
     return calc
 
 
-# ---------------------------------------------------------
-# EDIT (PUT)
-# ---------------------------------------------------------
+# =========================================================
+# 5. EDIT (PUT /calculations/{calc_id})
+# =========================================================
 @router.put("/{calc_id}", response_model=schemas.CalculationRead)
 def update_calculation(
     calc_id: int,
@@ -118,9 +140,9 @@ def update_calculation(
     return calc
 
 
-# ---------------------------------------------------------
-# DELETE (DELETE /{id})
-# ---------------------------------------------------------
+# =========================================================
+# 6. DELETE (DELETE /calculations/{calc_id})
+# =========================================================
 @router.delete("/{calc_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_calculation(
     calc_id: int,
