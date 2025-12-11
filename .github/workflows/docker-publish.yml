@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Log in to Docker Hub
@@ -21,11 +21,11 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/module14:latest .
-          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/module14:latest \
-                     ${{ secrets.DOCKERHUB_USERNAME }}/module14:${{ github.sha }}
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/final-project:latest .
+          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/final-project:latest \
+                     ${{ secrets.DOCKERHUB_USERNAME }}/final-project:${{ github.sha }}
 
       - name: Push Docker image
         run: |
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/module14:latest
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/module14:${{ github.sha }}
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/final-project:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/final-project:${{ github.sha }}
