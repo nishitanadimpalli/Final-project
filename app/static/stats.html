@@ -38,9 +38,14 @@
         async function loadStats() {
             const messageEl = document.getElementById("message");
 
-            const token = localStorage.getItem("access_token");
+            // ⭐ FIX: Support BOTH "access_token" and "token"
+            const token =
+                localStorage.getItem("access_token") ||
+                localStorage.getItem("token");
+
             if (!token) {
                 messageEl.textContent = "Please log in first, then return to this page.";
+                messageEl.style.color = "red";
                 return;
             }
 
@@ -85,7 +90,7 @@
 
         document.getElementById("loadBtn").addEventListener("click", loadStats);
 
-        // Load immediately on page open
+        // Load immediately on page open (optional)
         window.addEventListener("DOMContentLoaded", loadStats);
     </script>
 </body>
