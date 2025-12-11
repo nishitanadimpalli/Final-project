@@ -2,7 +2,9 @@ name: Final Project CI/CD
 
 on:
   push:
+    branches: [ "main" ]
   pull_request:
+    branches: [ "main" ]
 
 jobs:
   test:
@@ -14,52 +16,36 @@ jobs:
         env:
           POSTGRES_USER: calcuser
           POSTGRES_PASSWORD: calcpass
-          POSTGRES_DB: projectdb
+          POSTGRES_DB: module10db
         ports:
-          - "5432:5432"
+          - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U calcuser"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
+          --health-cmd "pg_isready -U calcuser"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
 
     env:
-      DATABASE_URL: postgresql://calcuser:calcpass@localhost:5432/projectdb
+      DATABASE_URL: postgresql://calcuser:calcpass@localhost:5432/module10db
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.12"
 
-      - name: Install dependencies
+      - name: Install deps
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           playwright install --with-deps
 
-      - name: Run Tests (Unit + Integration + E2E)
+      # 🆕 ADD THIS FIX
+      - name: Initialize database tables (CI)
+        run: python app/ci_init_db.py
+
+      - name: Run tests
         run: pytest -q
-
-  docker:
-    needs: test
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_TOKEN }}
-
-      - name: Build Docker Image
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/final-project-app:latest .
-
-      - name: Push Docker Image
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/final-project-app:latest
