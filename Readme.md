@@ -125,3 +125,5 @@ Push image to Docker Hub
 The workflow file is located at:
 
 .github/workflows/ci.yml
+docker:
+https://hub.docker.com/u/nishitanadimpalli
